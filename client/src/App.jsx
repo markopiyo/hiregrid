@@ -1,13 +1,22 @@
 import { Routes, Route } from "react-router-dom";
 import { SignIn, SignUp } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
+import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Applications from "./pages/Applications";
 import ApplicationDetail from "./pages/ApplicationDetail";
 import NewApplication from "./pages/NewApplication";
+import { setAuthToken } from "./lib/api";
 
 export default function App() {
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    getToken().then((token) => setAuthToken(token));
+  }, [getToken]);
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
