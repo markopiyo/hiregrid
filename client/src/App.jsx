@@ -1,30 +1,17 @@
 import { Routes, Route } from "react-router-dom";
 import { SignIn, SignUp } from "@clerk/clerk-react";
-import { useAuth } from "@clerk/clerk-react";
-import { useEffect } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Applications from "./pages/Applications";
 import ApplicationDetail from "./pages/ApplicationDetail";
 import NewApplication from "./pages/NewApplication";
-import { setAuthToken } from "./lib/api";
+import Navbar from "./components/Navbar";
 
 export default function App() {
-  //Temporary for testing
-
-  const { getToken } = useAuth();
-  const test = async () => {
-    const token = await getToken();
-    console.log(JSON.stringify(token)); // wrap in quotes so console doesn't truncate/format it
-  };
-
-  useEffect(() => {
-    getToken().then((token) => setAuthToken(token));
-  }, [getToken]);
-
   return (
     <>
+      <Navbar />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
