@@ -1,4 +1,5 @@
 import express from "express";
+import { getAuth } from "@clerk/express";
 import Note from "../models/Note.js";
 import Application from "../models/Application.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -6,15 +7,14 @@ import { requireAuth } from "../middleware/auth.js";
 const router = express.Router();
 router.use(requireAuth);
 
-// GET all notes for an application (only if the application belongs to the user)
 router.get("/application/:applicationId", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const app = await Application.findOne({
       _id: req.params.applicationId,
-      userId: req.auth.userId,
+      userId,
     });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     const notes = await Note.find({
       applicationId: req.params.applicationId,
     }).sort({ createdAt: -1 });
@@ -24,15 +24,14 @@ router.get("/application/:applicationId", async (req, res) => {
   }
 });
 
-// POST new note (only if the parent application belongs to the user)
 router.post("/", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const app = await Application.findOne({
       _id: req.body.applicationId,
-      userId: req.auth.userId,
+      userId,
     });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     const note = await Note.create(req.body);
     res.status(201).json(note);
   } catch (err) {
@@ -40,18 +39,13 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE note (only if its parent application belongs to the user)
 router.delete("/:id", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ error: "Note not found" });
-
-    const app = await Application.findOne({
-      _id: note.applicationId,
-      userId: req.auth.userId,
-    });
+    const app = await Application.findOne({ _id: note.applicationId, userId });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     await note.deleteOne();
     res.json({ message: "Note deleted" });
   } catch (err) {

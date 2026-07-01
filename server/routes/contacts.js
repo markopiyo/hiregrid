@@ -1,4 +1,5 @@
 import express from "express";
+import { getAuth } from "@clerk/express";
 import Contact from "../models/Contact.js";
 import Application from "../models/Application.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -6,15 +7,14 @@ import { requireAuth } from "../middleware/auth.js";
 const router = express.Router();
 router.use(requireAuth);
 
-// GET all contacts for an application (only if the application belongs to the user)
 router.get("/application/:applicationId", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const app = await Application.findOne({
       _id: req.params.applicationId,
-      userId: req.auth.userId,
+      userId,
     });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     const contacts = await Contact.find({
       applicationId: req.params.applicationId,
     });
@@ -24,15 +24,14 @@ router.get("/application/:applicationId", async (req, res) => {
   }
 });
 
-// POST new contact (only if the parent application belongs to the user)
 router.post("/", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const app = await Application.findOne({
       _id: req.body.applicationId,
-      userId: req.auth.userId,
+      userId,
     });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     const contact = await Contact.create(req.body);
     res.status(201).json(contact);
   } catch (err) {
@@ -40,18 +39,16 @@ router.post("/", async (req, res) => {
   }
 });
 
-// DELETE contact (only if its parent application belongs to the user)
 router.delete("/:id", async (req, res) => {
   try {
+    const { userId } = getAuth(req);
     const contact = await Contact.findById(req.params.id);
     if (!contact) return res.status(404).json({ error: "Contact not found" });
-
     const app = await Application.findOne({
       _id: contact.applicationId,
-      userId: req.auth.userId,
+      userId,
     });
     if (!app) return res.status(404).json({ error: "Application not found" });
-
     await contact.deleteOne();
     res.json({ message: "Contact deleted" });
   } catch (err) {
